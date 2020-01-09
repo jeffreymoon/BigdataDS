@@ -90,7 +90,8 @@ def d_dx_as_terms(terms):
              terms와 동일한 형식, 값은 terms의 미분 결과
     """
     after_dx = dict()
-    for degree, factor in sorted(terms.items(), reverse=True):
+    # for degree, factor in sorted(terms.items(), reverse=True):
+    for degree, factor in terms.items():
         if degree == 0:
             continue
         key = degree - 1
@@ -122,7 +123,8 @@ def integral_as_terms(terms, constant):
              terms와 동일한 형식, 값은 terms의 적분 결과
     """
     after_dx = dict()
-    for degree, factor in sorted(terms.items(), reverse=True):
+    # for degree, factor in sorted(terms.items(), reverse=True):
+    for degree, factor in terms.items():
         key = degree + 1
         value = factor // key
         after_dx[key] = value
@@ -185,7 +187,7 @@ def solve_query(line):
         # 이 안에 코드를 작성해주세요!
         # solve_query() 함수에서 실행 도중 불가피한 오류가 발생하더라도,
         # 다음 쿼리를 받아들일 수 있게 도와줍니다.
-        return  #'2x'    # if line == 'D,x^2'
+        return '' #'2x'    # if line == 'D,x^2'
     except:
         traceback.print_exc()
         return ''
@@ -197,6 +199,12 @@ def solve(input_path, output_path):
     :param output_path: str
     :return: None (파일 입출력으로 문제 해결)
     """
+    f_in = open(input_path)
+    f_out = open(output_path, 'w')
+    for line in f_in:
+        f_out.write(solve_query(line)+'\n')
+        
+    f_out.close
     return
 
 
