@@ -16,29 +16,19 @@ def print_term(degree, factor):
     :param factor: int, 항의 차수
     :return: str
     """
-    x = 'x'
-    gguk = '^'
-    if factor == 0:
-        fac = '0'
-    elif factor == 1:
-        fac = '1'
-    elif factor == -1:
-        fac = '-1'
-    else:
-        fac = str(factor)
+    x = '' if (degree == 0) else 'x'
+    gguk = '' if (degree == 0 or degree == 1) else '^'
+    # if factor == 0:
+    #     fac = '0'
+    # elif factor == 1:
+    #     fac = ''
+    # elif factor == -1:
+    #     fac = '-'
+    # else:
+    fac = str(factor)
+    deg = '' if (degree == 0 or degree == 1) else str(degree)
 
-    if degree == 0:
-        deg = ''
-        x = ''
-        gguk = ''
-    elif degree == 1:
-        deg = ''
-        gguk = ''
-    else:
-        deg = str(degree)
-
-    result = fac + x + gguk + deg
-    return result    # when degree == 2 and factor == 7
+    return fac + x + gguk + deg    # when degree == 2 and factor == 7
 
 
 def print_equation(terms):
@@ -61,14 +51,25 @@ def parse_term(term_str):
     :param term_str: str
     :return: 2-tuple (degree: int, factor: int)
     """
-    if "^" in term_str:
-        divide = term_str.split('x^')
-    elif 'x' in term_str:
-        divide = term_str.split('x')
+    if ('x^' in term_str):
+        degree = int(term_str[(term_str.index('^')+1):])
+    elif ('x' in term_str):
+        degree = 1
     else:
-        divide = term_str
-    print(divide)
-    return 2, 5    # when term_str == '5x^2'
+        degree = 0
+    
+    if ('x' in term_str):
+        ter = term_str[:term_str.index('x')]
+        if ter == None:
+            factor = 1
+        elif ter == '-':
+            factor = -1
+        else:
+            factor = int(term_str[:term_str.index('x')])
+    else:
+        factor = int(term_str)
+    
+    return degree, factor #2, 5    # when term_str == '5x^2'
 
 
 def parse_equation(equation):
@@ -76,7 +77,10 @@ def parse_equation(equation):
     :param equation: str
     :return: dict {key=degree, value=factor}
     """
-    return {1: -7, 2: 3}    # when equation == '-7x + 3x^2'
+    eq_list = [parse_term(eq) for eq in equation.split(' + ')]
+    eq_list.sort(reverse=True)
+    eq_dict = dict((key, value) for key, value in eq_list)
+    return eq_dict #{1: -7, 2: 3}    # when equation == '-7x + 3x^2'
 
 
 def d_dx_as_terms(terms):
@@ -85,7 +89,18 @@ def d_dx_as_terms(terms):
     :return: dict {key=degree, value=factor}
              terms와 동일한 형식, 값은 terms의 미분 결과
     """
-    return {0: 3, 2: 6}    # when terms == {1: 3, 3: 2}
+    after_dx = dict()
+    for degree, factor in sorted(terms.items(), reverse=True):
+        if degree == 0:
+            continue
+        key = degree - 1
+        value = factor * degree
+        after_dx[key] = value
+
+    if not (len(after_dx)):
+        return {0:0}
+        
+    return after_dx #{0: 3, 2: 6}    # when terms == {1: 3, 3: 2}
 
 
 def d_dx(equation):
@@ -93,7 +108,10 @@ def d_dx(equation):
     :param equation: str
     :return: str (differential result)
     """
-    return '2 + 6x'    # when equation == '2x + 3x^2'
+    parsed_eq = parse_equation(equation)
+    after_dx_terms = d_dx_as_terms(parsed_eq)
+    printed_eq = print_equation(after_dx_terms)
+    return printed_eq #'2 + 6x'    # when equation == '2x + 3x^2'
 
 
 def integral_as_terms(terms, constant):
@@ -103,7 +121,15 @@ def integral_as_terms(terms, constant):
     :return: dict {key=degree, value=factor}
              terms와 동일한 형식, 값은 terms의 적분 결과
     """
-    return {0: 6, 1: -2, 2: 5}    # when terms == {0: -2, 1: 10} and constant == 6
+    after_dx = dict()
+    for degree, factor in sorted(terms.items(), reverse=True):
+        key = degree + 1
+        value = factor // key
+        after_dx[key] = value
+
+    after_dx[0] = constant
+
+    return after_dx #{0: 6, 1: -2, 2: 5}    # when terms == {0: -2, 1: 10} and constant == 6
 
 
 def integral(equation, constant):
@@ -112,7 +138,10 @@ def integral(equation, constant):
     :param constant: str
     :param constant: str (integral result)
     """
-    return '5 + 3x + 5x^5'    # when equation == '3 + 25x^4' and constant == 5
+    parsed_eq = parse_equation(equation)
+    after_integral_terms = integral_as_terms(parsed_eq, constant)
+    printed_eq = print_equation(after_integral_terms)
+    return printed_eq #'5 + 3x + 5x^5'    # when equation == '3 + 25x^4' and constant == 5
 
 
 def compute_as_terms(terms, x):
