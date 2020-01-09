@@ -139,7 +139,7 @@ def integral(equation, constant):
     :param constant: str (integral result)
     """
     parsed_eq = parse_equation(equation)
-    after_integral_terms = integral_as_terms(parsed_eq, constant)
+    after_integral_terms = integral_as_terms(parsed_eq, int(constant))
     printed_eq = print_equation(after_integral_terms)
     return printed_eq #'5 + 3x + 5x^5'    # when equation == '3 + 25x^4' and constant == 5
 
@@ -150,7 +150,10 @@ def compute_as_terms(terms, x):
     :param x: int
     :return: int
     """
-    return 5    # when terms == {0: 5, 1: -3, 2: 1} and x = 3
+    result = 0
+    for degree, factor in terms.items():
+        result += factor * (x**degree)
+    return result #5    # when terms == {0: 5, 1: -3, 2: 1} and x = 3
 
 
 def compute(equation, x):
@@ -159,7 +162,9 @@ def compute(equation, x):
     :param x: str
     :return: str <- not int type
     """
-    return '5'    # when equation == '5 + -3x + x^2' and x == 3
+    parsed_eq = parse_equation(equation)
+    computed_terms = compute_as_terms(parsed_eq, int(x))
+    return str(computed_terms) #'5'    # when equation == '5 + -3x + x^2' and x == 3
 
 
 def solve_query(line):
@@ -168,10 +173,19 @@ def solve_query(line):
     :return: str
     """
     try:
+        query = line.split(',')
+        if query[0] == 'D':
+            return d_dx(query[1])
+        elif query[0] == 'I':
+            return integral(query[1], query[2])
+        elif query[0] == 'C':
+            return compute(query[1], query[2])
+        else:
+            pass
         # 이 안에 코드를 작성해주세요!
         # solve_query() 함수에서 실행 도중 불가피한 오류가 발생하더라도,
         # 다음 쿼리를 받아들일 수 있게 도와줍니다.
-        return '2x'    # if line == 'D,x^2'
+        return  #'2x'    # if line == 'D,x^2'
     except:
         traceback.print_exc()
         return ''
@@ -190,12 +204,4 @@ if __name__ == '__main__':
     ipath = 'input_sample.txt'
     opath = 'output_sample.txt'
 
-    # solve(ipath, opath)
-    # print(print_term(2, 0))
-    # print(print_term(1, -1))    
-    # print(print_term(0, 5))
-    # dic = dict({2:0, 1:-1, 0:5})
-    # print(print_equation(dic))
-    parse_term("0x^2")
-    parse_term("-x")
-    parse_term("5")
+    solve(ipath, opath)
