@@ -65,15 +65,21 @@ class Terms:
         :return: str
         """
         # use wolfram_beta's print_term
-        x = '' if (degree == 0) else 'x'
-        gguk = '' if (degree == 0 or degree == 1) else '^'
+        if type(degree) is str:
+            deg = degree
+            x = ''
+            caret = ''
+        else :
+            x = '' if (degree == 0) else 'x'
+            caret = '' if (degree == 0 or degree == 1) else '^'
+            deg = '' if (degree == 0 or degree == 1) else str(degree)
+        
         if degree is not 0:
             fac = '' if factor is 1 else ('-' if factor is (-1) else str(factor))
         else:
             fac = str(factor)
-        deg = '' if (degree == 0 or degree == 1) else str(degree)
 
-        return fac + x + gguk + deg
+        return fac + x + caret + deg
 
     def print_equation(self):
         """
@@ -109,7 +115,10 @@ class Terms:
             degree = 'exp(x)'
         elif 'x^' in term_str:
             ts = term_str.split('x^')
-            degree = int(ts[1])
+            try:
+                degree = int(ts[1])
+            except:
+                degree = float(ts[1])
         elif 'x' in term_str:
             ts = term_str.split('x')
             degree = 1
@@ -117,14 +126,15 @@ class Terms:
             ts = [term_str]
             degree = 0
 
-        # degree = (int(term_str[(term_str.index('^')+1):]) 
-        #             if '^' in term_str else (1 if 'x' in term_str else 0))
         if ts[0] is '':
             factor = 1
         elif ts[0] is '-':
             factor = -1
         else :
-            factor = int(ts[0])
+            try:
+                factor = int(ts[0])
+            except:
+                factor = float(ts[0])
         
         return degree, factor
 
@@ -136,9 +146,15 @@ class Terms:
         # update self.terms_dict
         # terms in equation is separated by ' + '
         # use dict.get(key, default)
+        eq_dict = dict()
+
         eq_list = [self.parse_term(eq) for eq in equation.split(' + ')]
-        eq_list.sort(reverse=True)
-        eq_dict = dict((key, value) for key, value in eq_list)
+        for key, value in eq_list:
+            if key in eq_dict:
+                eq_dict[key] += value
+            else :
+                eq_dict[key] = value
+
         self.terms_dict = eq_dict
 
     def d_dx_as_terms(self):
@@ -150,14 +166,27 @@ class Terms:
 
         # process each term (degree, factor) in terms
         # use dict.get(key, default)
+        
         for degree in self.terms_dict:
-            if degree == 0:
-                continue
-            key = degree - 1
-            factor = self.terms_dict.get(degree, 0)
-            dterms.terms_dict[key] = factor * degree
+            if type(degree) is str:
+                if degree == 'sin(x)':
+                    key = 'cos(x)'
+                    dterms.terms_dict[key] = self.terms_dict.get(degree, 0)
+                elif degree == 'cos(x)':
+                    key = 'sin(x)'
+                    dterms.terms_dict[key] = self.terms_dict.get(degree, 0) * (-1)
+                elif degree == 'exp(x)':
+                    key = 'exp(x)'
+                    dterms.terms_dict[key] = self.terms_dict.get(degree, 0)
+                else:
+                    pass
+            else:
+                if degree is 0:
+                    continue
+                key = degree - 1
+                dterms.terms_dict[key] = self.terms_dict.get(degree, 0) * degree
 
-        if not (len(dterms.terms_dict)):
+        if (len(dterms.terms_dict)) is 0:
             dterms.terms_dict = {0:0}
             
         return dterms
@@ -175,9 +204,25 @@ class Terms:
 
         # don't forget the constant
         for degree in self.terms_dict:
-            key = degree + 1
-            factor = self.terms_dict.get(degree, 0)
-            iterms.terms_dict[key] = factor // key
+            if type(degree) is str:
+                if degree == 'sin(x)':
+                    key = 'cos(x)'
+                    iterms.terms_dict[key] = self.terms_dict.get(degree, 0) * (-1)
+                elif degree == 'cos(x)':
+                    key = 'sin(x)'
+                    iterms.terms_dict[key] = self.terms_dict.get(degree, 0)
+                elif degree == 'exp(x)':
+                    key = 'exp(x)'
+                    iterms.terms_dict[key] = self.terms_dict.get(degree, 0)
+                else:
+                    pass
+            else:
+                key = degree + 1
+                factor = self.terms_dict.get(degree, 0)
+                if key % 1 == 0 and factor % 1 == 0:
+                    iterms.terms_dict[key] = factor // key
+                else:
+                    iterms.terms_dict[key] = float(factor) / key
 
         iterms.terms_dict[0] = constant
 
@@ -192,8 +237,20 @@ class Terms:
         # compute the result using Terms
         for degree in self.terms_dict:
             factor = self.terms_dict.get(degree, 0)
-            result += factor * (x**degree)
-        return int(result)
+            if type(degree) is str:
+                if degree == 'sin(x)':
+                    result += factor * math.sin(x)
+                elif degree == 'cos(x)':
+                    result += factor * math.cos(x)
+                elif degree == 'exp(x)':
+                    result += factor * math.exp(x)
+                else:
+                    pass
+            else:
+                # factor = self.terms_dict.get(degree, 0)
+                result += factor * (x**degree)
+        
+        return int(result) if result % 1 == 0 else result
 
 
 class WolframBeta:
@@ -246,7 +303,11 @@ class WolframBeta:
         # using Terms's class function
         terms = Terms(equation)
         terms.parse_equation(equation)
-        return str(terms.compute_as_terms(int(x)))        
+        try:
+            cast_x = int(x)
+        except:
+            cast_x = float(x)
+        return str(terms.compute_as_terms(cast_x))
 
     def solve_query(self, line):
         """
@@ -278,7 +339,7 @@ class WolframBeta:
         with open(self.input_path) as f_in:
             with open(self.output_path, 'w') as f_out: 
                 for line in f_in:
-                    f_out.write(self.solve_query(line)+'\n')
+                    f_out.write(self.solve_query(line.strip())+'\n')
         return
 
 

@@ -66,7 +66,6 @@ def parse_equation(equation):
     :return: dict {key=degree, value=factor}
     """
     eq_list = [parse_term(eq) for eq in equation.split(' + ')]
-    eq_list.sort(reverse=True)
     eq_dict = dict((key, value) for key, value in eq_list)
     return eq_dict #{1: -7, 2: 3}    # when equation == '-7x + 3x^2'
 
