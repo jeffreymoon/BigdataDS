@@ -12,7 +12,6 @@ using classes
 import traceback
 import math
 
-
 class Terms:
     def __init__(self, equation=None):
         """
@@ -22,7 +21,9 @@ class Terms:
         # make Terms.terms : dict {key = degree, val = factor}
         # store the equation if not None
         self.terms_dict = dict()
-        self.equation = None
+        if equation:
+            self.parse_equation(equation)
+        self.equation = equation
         pass
 
     def __str__(self):
@@ -53,6 +54,9 @@ class Terms:
                 return False
         return True
 
+    def get_terms_dict(self):
+        return self.terms_dict
+
     @staticmethod
     def print_term(degree, factor):
         """
@@ -61,7 +65,15 @@ class Terms:
         :return: str
         """
         # use wolfram_beta's print_term
-        return str()
+        x = '' if (degree == 0) else 'x'
+        gguk = '' if (degree == 0 or degree == 1) else '^'
+        if degree is not 0:
+            fac = '' if factor is 1 else ('-' if factor is (-1) else str(factor))
+        else:
+            fac = str(factor)
+        deg = '' if (degree == 0 or degree == 1) else str(degree)
+
+        return fac + x + gguk + deg
 
     def print_equation(self):
         """
@@ -69,7 +81,12 @@ class Terms:
         :return: str equation
         """
         # use wolfram_beta's print_equation
-        return str()
+        equa = []
+        for key, value in self.terms_dict.items():
+            temp = self.print_term(key, value)
+            equa.append(str(temp))
+        result = ' + '.join(equa)
+        return result        
 
     @staticmethod
     def parse_term(term_str):
@@ -81,7 +98,35 @@ class Terms:
         # now, degree is float
         #             or (cos(x), sin(x), exp(x)
         #      factor is float
-        return (0.0, 0.0)
+        if 'sin(x)' in term_str:
+            ts = term_str.split('sin(x)')
+            degree = 'sin(x)'
+        elif 'cos(x)' in term_str:
+            ts = term_str.split('cos(x)')
+            degree = 'cos(x)'
+        elif 'exp(x)' in term_str:
+            ts = term_str.split('exp(x)')
+            degree = 'exp(x)'
+        elif 'x^' in term_str:
+            ts = term_str.split('x^')
+            degree = int(ts[1])
+        elif 'x' in term_str:
+            ts = term_str.split('x')
+            degree = 1
+        else:
+            ts = [term_str]
+            degree = 0
+
+        # degree = (int(term_str[(term_str.index('^')+1):]) 
+        #             if '^' in term_str else (1 if 'x' in term_str else 0))
+        if ts[0] is '':
+            factor = 1
+        elif ts[0] is '-':
+            factor = -1
+        else :
+            factor = int(ts[0])
+        
+        return degree, factor
 
     def parse_equation(self, equation):
         """
@@ -91,7 +136,10 @@ class Terms:
         # update self.terms_dict
         # terms in equation is separated by ' + '
         # use dict.get(key, default)
-        self.terms_dict = dict()
+        eq_list = [self.parse_term(eq) for eq in equation.split(' + ')]
+        eq_list.sort(reverse=True)
+        eq_dict = dict((key, value) for key, value in eq_list)
+        self.terms_dict = eq_dict
 
     def d_dx_as_terms(self):
         """
@@ -102,7 +150,16 @@ class Terms:
 
         # process each term (degree, factor) in terms
         # use dict.get(key, default)
+        for degree in self.terms_dict:
+            if degree == 0:
+                continue
+            key = degree - 1
+            factor = self.terms_dict.get(degree, 0)
+            dterms.terms_dict[key] = factor * degree
 
+        if not (len(dterms.terms_dict)):
+            dterms.terms_dict = {0:0}
+            
         return dterms
 
     def integral_as_terms(self, constant):
@@ -117,6 +174,13 @@ class Terms:
         # use dict.get(key, default)
 
         # don't forget the constant
+        for degree in self.terms_dict:
+            key = degree + 1
+            factor = self.terms_dict.get(degree, 0)
+            iterms.terms_dict[key] = factor // key
+
+        iterms.terms_dict[0] = constant
+
         return iterms
 
     def compute_as_terms(self, x):
@@ -126,8 +190,10 @@ class Terms:
         """
         result = 0.0
         # compute the result using Terms
-
-        return result
+        for degree in self.terms_dict:
+            factor = self.terms_dict.get(degree, 0)
+            result += factor * (x**degree)
+        return int(result)
 
 
 class WolframBeta:
@@ -152,7 +218,10 @@ class WolframBeta:
         :return: equation str (differential result)
         """
         # using Terms's class function
-        return str()  # equation
+        terms = Terms(equation)
+        terms.parse_equation(equation)
+        dx_terms = terms.d_dx_as_terms()
+        return dx_terms.print_equation()
 
     @staticmethod
     def integral(equation, constant):
@@ -162,7 +231,10 @@ class WolframBeta:
         :return: str equation (integral result)
         """
         # using Terms's class function
-        return str()  # equation
+        terms = Terms(equation)
+        terms.parse_equation(equation)
+        integral_terms = terms.integral_as_terms(constant)
+        return integral_terms.print_equation()
 
     @staticmethod
     def compute(equation, x):
@@ -172,7 +244,9 @@ class WolframBeta:
         :return: str <- not int type
         """
         # using Terms's class function
-        return str()  # result
+        terms = Terms(equation)
+        terms.parse_equation(equation)
+        return str(terms.compute_as_terms(int(x)))        
 
     def solve_query(self, line):
         """
@@ -183,7 +257,16 @@ class WolframBeta:
             # 이 안에 코드를 작성해주세요!
             # solve_query() 함수에서 실행 도중 불가피한 오류가 발생하더라도,
             # 다음 쿼리를 받아들일 수 있게 도와줍니다.
-            return ''  # if line == 'D,x^2'
+            query = line.split(',')
+            if query[0] == 'D':
+                return WolframBeta.d_dx(query[1])
+            elif query[0] == 'I':
+                return WolframBeta.integral(query[1], query[2])
+            elif query[0] == 'C':
+                return WolframBeta.compute(query[1], query[2])
+            else:
+                pass            
+            return ''
         except:
             traceback.print_exc()
             return ''
@@ -192,6 +275,10 @@ class WolframBeta:
         """
         :return: None (파일 입출력으로 문제 해결)
         """
+        with open(self.input_path) as f_in:
+            with open(self.output_path, 'w') as f_out: 
+                for line in f_in:
+                    f_out.write(self.solve_query(line)+'\n')
         return
 
 
