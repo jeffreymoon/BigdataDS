@@ -18,14 +18,10 @@ def print_term(degree, factor):
     """
     x = '' if (degree == 0) else 'x'
     gguk = '' if (degree == 0 or degree == 1) else '^'
-    # if factor == 0:
-    #     fac = '0'
-    # elif factor == 1:
-    #     fac = ''
-    # elif factor == -1:
-    #     fac = '-'
-    # else:
-    fac = str(factor)
+    if degree:
+        fac = '' if factor is 1 else ('-' if factor is (-1) else str(factor))
+    else:
+        fac = str(factor)
     deg = '' if (degree == 0 or degree == 1) else str(degree)
 
     return fac + x + gguk + deg    # when degree == 2 and factor == 7
@@ -51,21 +47,13 @@ def parse_term(term_str):
     :param term_str: str
     :return: 2-tuple (degree: int, factor: int)
     """
-    if ('x^' in term_str):
-        degree = int(term_str[(term_str.index('^')+1):])
-    elif ('x' in term_str):
-        degree = 1
-    else:
-        degree = 0
+    degree = (int(term_str[(term_str.index('^')+1):]) 
+                if '^' in term_str else (1 if 'x' in term_str else 0))
     
     if ('x' in term_str):
         ter = term_str[:term_str.index('x')]
-        if ter == None:
-            factor = 1
-        elif ter == '-':
-            factor = -1
-        else:
-            factor = int(term_str[:term_str.index('x')])
+        factor = 1 if ter is '' else (-1 if ter is '-' 
+                                else int(term_str[:term_str.index('x')]))
     else:
         factor = int(term_str)
     
@@ -199,12 +187,10 @@ def solve(input_path, output_path):
     :param output_path: str
     :return: None (파일 입출력으로 문제 해결)
     """
-    f_in = open(input_path)
-    f_out = open(output_path, 'w')
-    for line in f_in:
-        f_out.write(solve_query(line)+'\n')
-        
-    f_out.close
+    with open(input_path) as f_in:
+        with open(output_path, 'w') as f_out: 
+            for line in f_in:
+                f_out.write(solve_query(line)+'\n')
     return
 
 
