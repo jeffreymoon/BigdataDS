@@ -16,13 +16,13 @@ def print_term(degree, factor):
     :param factor: int, 항의 차수
     :return: str
     """
-    x = '' if (degree == 0) else 'x'
-    gguk = '' if (degree == 0 or degree == 1) else '^'
+    x = '' if (degree is 0) else 'x'
+    gguk = '' if (degree is 0 or degree is 1) else '^'
     if degree:
         fac = '' if factor is 1 else ('-' if factor is (-1) else str(factor))
     else:
         fac = str(factor)
-    deg = '' if (degree == 0 or degree == 1) else str(degree)
+    deg = '' if (degree is 0 or degree is 1) else str(degree)
 
     return fac + x + gguk + deg    # when degree == 2 and factor == 7
 
@@ -80,7 +80,7 @@ def d_dx_as_terms(terms):
     after_dx = dict()
     # for degree, factor in sorted(terms.items(), reverse=True):
     for degree, factor in terms.items():
-        if degree == 0:
+        if degree is 0:
             continue
         key = degree - 1
         value = factor * degree
@@ -164,11 +164,11 @@ def solve_query(line):
     """
     try:
         query = line.split(',')
-        if query[0] == 'D':
+        if query[0] is 'D':
             return d_dx(query[1])
-        elif query[0] == 'I':
+        elif query[0] is 'I':
             return integral(query[1], query[2])
-        elif query[0] == 'C':
+        elif query[0] is 'C':
             return compute(query[1], query[2])
         else:
             pass
