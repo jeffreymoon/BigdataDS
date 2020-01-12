@@ -186,6 +186,10 @@ class Terms:
                 key = degree - 1
                 dterms.terms_dict[key] = self.terms_dict.get(degree, 0) * degree
 
+        # if key in dterms.terms_dict:
+        #     if dterms.terms_dict.get(key, 0) is 0:
+
+
         if (len(dterms.terms_dict)) is 0:
             dterms.terms_dict = {0:0}
             
@@ -319,11 +323,19 @@ class WolframBeta:
             # solve_query() 함수에서 실행 도중 불가피한 오류가 발생하더라도,
             # 다음 쿼리를 받아들일 수 있게 도와줍니다.
             query = line.split(',')
-            if query[0] == 'D':
+            if 'D' in query[0] :
+                if query[0].lstrip('D').isdecimal():
+                    repeat = int(query[0].lstrip('D'))
+                    for _ in range(repeat-1):
+                        query[1] = WolframBeta.d_dx(query[1])
                 return WolframBeta.d_dx(query[1])
-            elif query[0] == 'I':
+            elif 'I' in query[0] :
+                if query[0].lstrip('I').isdecimal():
+                    repeat = int(query[0].lstrip('I'))
+                    for _ in range(repeat-1):
+                        query[1] = WolframBeta.integral(query[1], query[2])
                 return WolframBeta.integral(query[1], query[2])
-            elif query[0] == 'C':
+            elif 'C' in query[0] :
                 return WolframBeta.compute(query[1], query[2])
             else:
                 pass            

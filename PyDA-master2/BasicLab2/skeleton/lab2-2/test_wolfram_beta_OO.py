@@ -14,6 +14,10 @@ def test_solve_query():
     assert wb.solve_query("C,0x,-1.5") == "0"
     assert wb.solve_query("I,0.5x,0.5") == "0.25x^2 + 0.5"
     assert wb.solve_query("I,-30x^4.5 + -3.5 + 2,-612") == "-5.454545454545454x^5.5 + -1.5x + -612"
+    assert wb.solve_query("D2,x^3") == "6x"
+    assert wb.solve_query("I,6x,0") == "3x^2 + 0"
+    assert wb.solve_query("I,3x^2,0") == "x^3 + 0"
+    # assert wb.solve_query("I2,6x,0") == "x^3 + 0 + 0"
 
 def test_compute():
     assert WolframBeta.compute("2x + -1", 5) == "9"
@@ -32,6 +36,8 @@ def test_compute_as_terms():
 
 def test_integral():
     assert WolframBeta.integral("2x + -1", 5) == "x^2 + -x + 5"
+    assert WolframBeta.integral("2x", 0) == "x^2 + 0"
+    assert WolframBeta.integral("3x^2 + 0", 0) == "x^3 + 0 + 0"
     assert (WolframBeta.integral("-54cos(x) + -24sin(x) + -exp(x)", -2)
              == "-54sin(x) + 24cos(x) + -exp(x) + -2")
 
